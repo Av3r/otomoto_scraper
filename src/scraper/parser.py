@@ -24,6 +24,7 @@ def split_brand_and_model(title: Optional[str]) -> (str, str):
 
 
 def parse_offer_element(it, base_url: str) -> Optional[Dict]:
+    print("\nParsing article:", it.prettify())
     # id
     data_id = it.get("data-id")
     id_val = data_id or make_id_from_url_or_hash("", "")
@@ -139,7 +140,9 @@ def parse_listings(html: str, base_url: str = BASE_URL) -> List[Dict]:
     # Find all <article> elements with data-id; these are the listings
     items = soup.find_all("article", attrs={"data-id": True})
 
-    print(f"Found {len(items)} offer elements")
+    print(f"Found {len(items)} article elements with data-id")
+    for it in items:
+        print(f"Article data-id={it.get('data-id')}")
 
     for it in items:
         parsed = parse_offer_element(it, base_url)
