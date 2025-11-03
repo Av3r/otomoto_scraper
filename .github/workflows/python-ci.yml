@@ -89,9 +89,9 @@ jobs:
         if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup AWS CLI
         if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' }}
@@ -101,7 +101,7 @@ jobs:
 
       - name: Test S3 access
         if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' && env.S3_BUCKET != '' }}
-        run: aws s3 ls s3://${{ secrets.S3_BUCKET }} || echo "bucket empty or inaccessible"
+        run: aws s3 ls s3://${{ env.S3_BUCKET }} || echo "bucket empty or inaccessible"
 
       - name: Run scraper
         run: |
