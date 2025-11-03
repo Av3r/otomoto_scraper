@@ -35,20 +35,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Install AWS CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
-
-      - name: Test S3 access
-        run: aws s3 ls s3://${{ secrets.S3_BUCKET }} || echo "bucket empty or inaccessible"
+      # AWS steps intentionally removed from the test job so tests don't fail
+      # when AWS secrets are not configured. The scraper run (manual) will
+      # configure AWS credentials and test S3 access.
 
       - name: Run tests
         run: |
@@ -91,6 +80,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Test S3 access
+        run: aws s3 ls s3://${{ secrets.S3_BUCKET }} || echo "bucket empty or inaccessible"
+
       - name: Run scraper
         run: |
           python -m src.scraper.main
@@ -102,3 +106,13 @@ jobs:
           name: all_offers
           path: data/all_offers.jsonl
           if-no-files-found: warn
+
+      - name: Upload output to S3 (if present)
+        if: always()
+        run: |
+          if [ -f data/all_offers.jsonl ]; then
+            aws s3 cp data/all_offers.jsonl s3://${{ secrets.S3_BUCKET }}/all_offers-${{ github.run_id }}.jsonl;
+            echo "Uploaded to s3://${{ secrets.S3_BUCKET }}/all_offers-${{ github.run_id }}.jsonl";
+          else
+            echo "No output file to upload to S3";
+          fi
