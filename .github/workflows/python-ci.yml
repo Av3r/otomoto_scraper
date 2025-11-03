@@ -58,3 +58,32 @@ jobs:
           name: pytest-report-${{ matrix.python-version }}
           path: .pytest_cache/**
           if-no-files-found: warn
+
+  run-scraper:
+    # Run separately and only when manually triggered to avoid duplication
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run scraper
+        run: |
+          python -m src.scraper.main
+
+      - name: Upload scraper output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all_offers
+          path: data/all_offers.jsonl
+          if-no-files-found: warn
