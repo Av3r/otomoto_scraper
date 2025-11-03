@@ -29,7 +29,7 @@ RUN mkdir -p /app/data
 
 # Set environment variables (can be overridden at runtime)
 ENV PYTHONUNBUFFERED=1
-ENV OTOMOTO_URL="https://www.otomoto.pl/osobowe/bmw/seria-5"
+# OTOMOTO_URL should be set via docker-compose.yml or -e flag
 
 # Default command: run the scraper
 CMD ["python", "-m", "src.scraper.main"]

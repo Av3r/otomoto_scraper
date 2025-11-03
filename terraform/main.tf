@@ -184,8 +184,8 @@ resource "aws_lambda_function" "scraper" {
     variables = {
       OTOMOTO_URL           = var.otomoto_url
       S3_BUCKET             = var.s3_bucket_name
-      AWS_REGION            = var.aws_region
       PYTHONUNBUFFERED      = "1"
+      # AWS_REGION is automatically set by Lambda (reserved key)
     }
   }
 
