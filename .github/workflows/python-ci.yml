@@ -67,6 +67,11 @@ jobs:
     # Run separately and only when manually triggered to avoid duplication
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -81,7 +86,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Configure AWS credentials
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -89,13 +94,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup AWS CLI
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' }}
         uses: aws-actions/setup-aws-cli@v2
         with:
           version: '2'
 
       - name: Test S3 access
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' && secrets.S3_BUCKET != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' && env.S3_BUCKET != '' }}
         run: aws s3 ls s3://${{ secrets.S3_BUCKET }} || echo "bucket empty or inaccessible"
 
       - name: Run scraper
@@ -111,11 +116,11 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload output to S3 (if present)
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' && secrets.S3_BUCKET != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' && env.S3_BUCKET != '' }}
         run: |
           if [ -f data/all_offers.jsonl ]; then
-            aws s3 cp data/all_offers.jsonl s3://${{ secrets.S3_BUCKET }}/all_offers-${{ github.run_id }}.jsonl;
-            echo "Uploaded to s3://${{ secrets.S3_BUCKET }}/all_offers-${{ github.run_id }}.jsonl";
+            aws s3 cp data/all_offers.jsonl s3://${{ env.S3_BUCKET }}/all_offers-${{ github.run_id }}.jsonl;
+            echo "Uploaded to s3://${{ env.S3_BUCKET }}/all_offers-${{ github.run_id }}.jsonl";
           else
             echo "No output file to upload to S3";
           fi
