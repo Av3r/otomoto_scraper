@@ -1,0 +1,18 @@
+# Docker Compose configuration for otomoto_scraper
+version: '3.8'
+
+services:
+  scraper:
+    build: .
+    container_name: otomoto-scraper
+    environment:
+      # Override these in .env file or here
+      - OTOMOTO_URL=${OTOMOTO_URL:-https://www.otomoto.pl/osobowe/bmw/seria-5}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-eu-central-1}
+      - S3_BUCKET=${S3_BUCKET:-}
+    volumes:
+      # Mount data directory to persist scraped results
+      - ./data:/app/data
+    restart: "no"

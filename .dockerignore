@@ -1,0 +1,51 @@
+# Docker ignore file for otomoto_scraper
+# Prevents unnecessary files from being copied into the Docker image
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Data and logs
+data/*.jsonl
+*.log
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Snapshots and temporary files
+snapshot.html
+*.tmp
+
+# CI/CD
+.github/
+
+# Documentation
+README.md
+docs/
