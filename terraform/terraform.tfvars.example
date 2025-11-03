@@ -1,0 +1,43 @@
+################################################################################
+# TERRAFORM.TFVARS.EXAMPLE - Przykładowa konfiguracja
+################################################################################
+# Ten plik pokazuje jakie zmienne możesz skonfigurować.
+# 
+# JAK UŻYĆ:
+# 1. Skopiuj ten plik: cp terraform.tfvars.example terraform.tfvars
+# 2. Edytuj terraform.tfvars z TWOIMI wartościami
+# 3. NIE commituj terraform.tfvars do git (zawiera sensitive data)
+################################################################################
+
+# AWS Configuration
+aws_region  = "eu-central-1"  # Frankfurt (najbliżej Polski)
+environment = "dev"
+
+# Project naming
+project_name = "otomoto-scraper"
+
+# ECR (Docker Registry)
+ecr_repository_name = "otomoto-scraper"
+
+# Lambda Configuration
+lambda_function_name = "otomoto-scraper"
+lambda_memory_size   = 512   # MB RAM (128-10240)
+lambda_timeout       = 900   # sekund (max 15 minut)
+
+# Application
+otomoto_url     = "https://www.otomoto.pl/osobowe/audi/a4"
+s3_bucket_name  = "otomoto-scraper-2025"
+
+# EventBridge Scheduler
+# OPCJE:
+# - "rate(6 hours)"         = co 6 godzin
+# - "rate(12 hours)"        = co 12 godzin
+# - "rate(1 day)"           = raz dziennie
+# - "cron(0 2 * * ? *)"     = codziennie o 2:00 UTC
+# - "cron(0 */6 * * ? *)"   = co 6 godzin (0:00, 6:00, 12:00, 18:00 UTC)
+schedule_expression = "rate(12 hours)"
+
+# Czy włączyć automatyczne uruchamianie?
+# false = tylko ręczne uruchamianie (AWS Console / CLI / GitHub Actions)
+# true  = automatyczne uruchamianie według schedule_expression
+schedule_enabled = false
