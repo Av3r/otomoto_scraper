@@ -38,6 +38,17 @@ jobs:
         run: |
           pytest -q
 
+      - name: Run scraper
+        run: |
+          python -m src.scraper.main
+
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all_offers
+          path: data/all_offers.jsonl
+
       - name: Upload pytest results (optional)
         if: always()
         uses: actions/upload-artifact@v4
