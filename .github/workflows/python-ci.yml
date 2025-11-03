@@ -46,12 +46,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: all_offers
+          name: all_offers-${{ matrix.python-version }}
           path: data/all_offers.jsonl
+          if-no-files-found: warn
 
       - name: Upload pytest results (optional)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-report
-          path: .pytest_cache || true
+          name: pytest-report-${{ matrix.python-version }}
+          path: .pytest_cache
+          if-no-files-found: warn
