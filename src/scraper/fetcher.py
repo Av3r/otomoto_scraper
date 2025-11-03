@@ -1,6 +1,14 @@
-import requests
+"""HTTP fetching helpers used by the scraper.
+
+This module provides a small retrying `fetch_page` helper which returns
+the HTML body or raises on repeated failures.
+"""
+
 import time
 from typing import Optional
+
+import requests
+from requests import RequestException
 
 HEADERS = {
     "User-Agent": (
@@ -13,7 +21,12 @@ HEADERS = {
     "Referer": "https://www.google.com/",
 }
 
+
 def fetch_page(url: str, timeout: int = 10, save_snapshot: Optional[str] = None) -> str:
+    """Fetch a URL with a small retry loop and return the response text.
+
+    On repeated failures a RuntimeError is raised.
+    """
     tries = 3
     for attempt in range(1, tries + 1):
         try:
@@ -27,13 +40,16 @@ def fetch_page(url: str, timeout: int = 10, save_snapshot: Optional[str] = None)
                     f.write(text)
             return text
         except requests.HTTPError as e:
+            # HTTP errors from raise_for_status
             print(f"[fetch] HTTP error {e} (attempt {attempt}/{tries})")
-            if resp.status_code in (403, 429):
+            status = getattr(resp, "status_code", None)
+            if status in (403, 429):
                 # 403 or rate-limit -> don't hammer, wait longer
                 time.sleep(5 * attempt)
             else:
                 time.sleep(1)
-        except Exception as e:
+        except RequestException as e:
+            # network-level errors (timeouts, connection errors, etc.)
             print(f"[fetch] network/error {e} (attempt {attempt}/{tries})")
             time.sleep(1 * attempt)
     raise RuntimeError(f"Failed to fetch {url} after {tries} tries")

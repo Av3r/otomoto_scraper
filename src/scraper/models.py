@@ -1,7 +1,21 @@
-from pydantic import BaseModel
-from typing import List, Optional
+"""Pydantic models used to validate parsed car offers.
 
-class CarModel(BaseModel):   
+Only a single `CarModel` is defined for the current test-suite and
+parser output validation.
+"""
+
+from typing import Optional
+
+from pydantic import BaseModel
+
+
+class CarModel(BaseModel):
+    """Schema for a scraped car offer.
+
+    Fields are simple and intentionally permissive to allow lenient
+    parsing from imperfect HTML.
+    """
+
     id: str
     url: str
     car_brand: str

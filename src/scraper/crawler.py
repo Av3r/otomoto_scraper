@@ -1,10 +1,17 @@
-import time
-from typing import List, Dict, Set
+"""A small, sequential web crawler used by the development tooling.
 
+The implementation is intentionally simple and synchronous — it fetches
+pages one by one, parses offers and appends new ones to a local JSONL file.
+"""
+
+import time
+from typing import Dict, List, Set
+
+from .config import BASE_URL
 from .fetcher import fetch_page
 from .parser import parse_listings
 from .storage import LocalJSONLStorage
-from .config import BASE_URL
+
 
 def scrape_pages(
     base_url: str = BASE_URL,
@@ -33,7 +40,7 @@ def scrape_pages(
         print(f"[scrape] Fetching page {page}: {url}")
         try:
             html = fetch_page(url, timeout=15)
-        except Exception as e:
+        except RuntimeError as e:
             print(f"[scrape] Fetch error on page {page}: {e}")
             break
 
@@ -55,7 +62,9 @@ def scrape_pages(
         if new_offers:
             storage.save(new_offers, filename="all_offers.jsonl")
             collected.extend(new_offers)
-            print(f"[scrape] Saved {len(new_offers)} new offers (total collected: {len(collected)})")
+            print(
+                f"[scrape] Saved {len(new_offers)} new offers (total collected: {len(collected)})"
+            )
         else:
             print("[scrape] No new offers on this page.")
 

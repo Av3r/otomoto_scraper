@@ -1,18 +1,33 @@
-from bs4 import BeautifulSoup
-from typing import List, Dict, Optional
-import re
+"""HTML parsing helpers for Otomoto listing pages.
 
+This module extracts car offer details from listing HTML and returns
+validated dictionaries using :class:`src.scraper.models.CarModel`.
+"""
+
+import re
+from typing import Dict, List, Optional
+
+from bs4 import BeautifulSoup
+
+from pydantic import ValidationError
+
+from .config import BASE_URL
+from .models import CarModel
 from .utils import (
+    absolute_url,
+    make_id_from_url_or_hash,
     parse_float_from_text,
     parse_int_from_text,
-    extract_currency,
-    make_id_from_url_or_hash,
-    absolute_url,
 )
-from .models import CarModel
-from .config import BASE_URL
 
-def split_brand_and_model(title: Optional[str]) -> (str, str):
+
+def split_brand_and_model(title: Optional[str]) -> tuple[str, str]:
+    """Split a listing title into (brand, model).
+
+    The split is naive: the first token is considered the brand and the
+    remainder the model. This is a best-effort heuristic used when no
+    structured brand/model data is available.
+    """
     if not title:
         return "", ""
     parts = title.split()
@@ -24,7 +39,11 @@ def split_brand_and_model(title: Optional[str]) -> (str, str):
 
 
 def parse_offer_element(it, base_url: str) -> Optional[Dict]:
-    print("\nParsing article:", it.prettify())
+    """Parse a single <article> offer element and return a dict.
+
+    Attempts to validate the parsed data with :class:`CarModel`. If
+    validation fails, a best-effort raw dictionary is returned instead.
+    """
     # id
     data_id = it.get("data-id")
     id_val = data_id or make_id_from_url_or_hash("", "")
@@ -64,7 +83,7 @@ def parse_offer_element(it, base_url: str) -> Optional[Dict]:
     if "year" in params:
         try:
             year = int(params["year"])
-        except Exception:
+        except (ValueError, TypeError):
             year = None
 
     # mileage, np. "225 275 km"
@@ -85,7 +104,7 @@ def parse_offer_element(it, base_url: str) -> Optional[Dict]:
             if m_engine:
                 try:
                     engine_capacity = float(m_engine.group(1))
-                except:
+                except (ValueError, TypeError):
                     pass
 
             # engine power in KM or kW
@@ -93,7 +112,7 @@ def parse_offer_element(it, base_url: str) -> Optional[Dict]:
             if m_power:
                 try:
                     engine_power = int(m_power.group(1))
-                except:
+                except (ValueError, TypeError):
                     pass
 
     # fuel type
@@ -125,7 +144,7 @@ def parse_offer_element(it, base_url: str) -> Optional[Dict]:
     try:
         car = CarModel.parse_obj(raw)
         return car.dict()
-    except Exception as e:
+    except ValidationError as e:
         print("CarModel validation failed:", e, "raw:", raw)
         # Coerce minimal data if validation fails
         raw["id"] = str(raw.get("id") or make_id_from_url_or_hash(url, title))
@@ -134,15 +153,14 @@ def parse_offer_element(it, base_url: str) -> Optional[Dict]:
 
 
 def parse_listings(html: str, base_url: str = BASE_URL) -> List[Dict]:
+    """Parse an HTML listing page and return a list of offers."""
     soup = BeautifulSoup(html, "html.parser")
     results = []
 
     # Find all <article> elements with data-id; these are the listings
     items = soup.find_all("article", attrs={"data-id": True})
 
-    print(f"Found {len(items)} article elements with data-id")
-    for it in items:
-        print(f"Article data-id={it.get('data-id')}")
+    print(f"Found {len(items)} offer elements")
 
     for it in items:
         parsed = parse_offer_element(it, base_url)

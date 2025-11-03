@@ -1,4 +1,11 @@
+"""Configuration values for the scraper.
+
+This module reads environment variables (via python-dotenv) and exposes
+configuration constants used across the package.
+"""
+
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()

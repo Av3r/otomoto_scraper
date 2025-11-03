@@ -1,12 +1,16 @@
 import pytest
-#from src.scraper.utils import some_utility_function
+
+# from src.scraper.utils import some_utility_function
 from src.scraper.models import CarModel
-from src.scraper.utils import parse_int_from_text, parse_float_from_text, extract_currency
+from src.scraper.utils import (extract_currency, parse_float_from_text,
+                               parse_int_from_text)
+
 
 def test_parse_int_from_text():
     assert parse_int_from_text("225 275 km") == 225275
     assert parse_int_from_text("120000") == 120000
     assert parse_int_from_text("brak") is None
+
 
 def test_parse_float_and_currency():
     assert parse_float_from_text("48 500") == 48500.0
@@ -33,25 +37,3 @@ def test_valid_car_model_creation():
     assert car.id == "1"
     assert car.car_brand == "Toyota"
     assert car.price == 20000.0
-
-
-# def test_invalid_car_model_creation():
-#     with pytest.raises(ValueError):
-#         CarModel(
-#             id="2",
-#             url="http://example.com/car/2",
-#             car_brand="Honda",
-#             model="Civic",
-#             year="not_a_year",  # Invalid year
-#             price=18000.0,
-#         )
-
-#     with pytest.raises(ValueError):
-#         CarModel(
-#             id="3",
-#             url="http://example.com/car/3",
-#             car_brand="",
-#             model="Civic",
-#             year=2020,
-#             price=18000.0,
-#         )

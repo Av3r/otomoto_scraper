@@ -1,10 +1,11 @@
-from pathlib import Path
-import pytest
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 from src.scraper.fetcher import fetch_page
-from src.scraper.parser import parse_listings
 from src.scraper.models import CarModel
+from src.scraper.parser import parse_listings
 
 
 @pytest.fixture
@@ -16,9 +17,9 @@ def sample_html():
 
 def test_fetch_and_parse_integration(monkeypatch, sample_html):
     """Test that fetcher and parser work together with sample data"""
-    
+
     from src.scraper import fetcher
-    
+
     # Setup the mock
     def fake_fetch(url, timeout=10, save_snapshot=None):
         print(f"[test] Returning sample HTML for {url}")
@@ -31,12 +32,14 @@ def test_fetch_and_parse_integration(monkeypatch, sample_html):
     html = fetcher.fetch_page("https://www.otomoto.pl/osobowe/bmw")
     print("[test] Sample HTML length:", len(html))
     print("[test] Sample HTML preview:", html[:200])
-    
+
     listings = parse_listings(html)
 
     assert listings is not None
     assert isinstance(listings, list)
-    assert len(listings) > 0  # should find at least one listing    # Find our known test cases from the fixture
+    assert (
+        len(listings) > 0
+    )  # should find at least one listing    # Find our known test cases from the fixture
     bmw_530i = next((car for car in listings if car["id"] == "6FRsVn"), None)
     bmw_520d = next((car for car in listings if car["id"] == "6FRt2m"), None)
 

@@ -1,7 +1,8 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 import pytest
+
 import src.scraper.crawler as crawler_mod
 
 
@@ -40,6 +41,7 @@ def invalid_html():
 
 def test_scrape_one_page_monkeypatched(monkeypatch, tmp_path, sample_html):
     """Test basic crawling with two valid listings"""
+
     # fake fetch_page that returns our static sample
     def fake_fetch(url, timeout=10, save_snapshot=None):
         return sample_html
@@ -97,11 +99,14 @@ def test_scrape_one_page_monkeypatched(monkeypatch, tmp_path, sample_html):
 
 def test_scrape_empty_page(monkeypatch, tmp_path, empty_html):
     """Test crawler behavior with a page containing zero listings"""
+
     def fake_fetch(url, timeout=10, save_snapshot=None):
         return empty_html
 
     monkeypatch.setattr(crawler_mod, "fetch_page", fake_fetch)
-    monkeypatch.setattr(crawler_mod, "LocalJSONLStorage", lambda folder: None)  # no storage needed
+    monkeypatch.setattr(
+        crawler_mod, "LocalJSONLStorage", lambda folder: None
+    )  # no storage needed
 
     offers = crawler_mod.scrape_pages(
         base_url="https://www.otomoto.pl/empty",
@@ -116,6 +121,7 @@ def test_scrape_empty_page(monkeypatch, tmp_path, empty_html):
 
 def test_scrape_invalid_html(monkeypatch, tmp_path, invalid_html):
     """Test crawler error handling with invalid HTML"""
+
     def fake_fetch(url, timeout=10, save_snapshot=None):
         return invalid_html
 
@@ -134,20 +140,21 @@ def test_scrape_invalid_html(monkeypatch, tmp_path, invalid_html):
 
 def test_scrape_deduplication(monkeypatch, tmp_path, sample_html):
     """Test that crawler deduplicates offers by ID"""
+
     def fake_fetch(url, timeout=10, save_snapshot=None):
         return sample_html  # return same offers on every page
 
     monkeypatch.setattr(crawler_mod, "fetch_page", fake_fetch)
-    
+
     class CountingStorage:
         def __init__(self, folder="data"):
             self.saved_offers = []
             self.folder = tmp_path
-        
+
         def save(self, offers, filename="all_offers.jsonl"):
             self.saved_offers.extend(offers)
             return str(self.folder / filename)
-    
+
     storage = CountingStorage()
     monkeypatch.setattr(crawler_mod, "LocalJSONLStorage", lambda folder: storage)
 
