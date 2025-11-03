@@ -1,0 +1,27 @@
+# Dockerfile for AWS Lambda
+# AWS Lambda requires specific base image with Lambda runtime interface
+
+FROM public.ecr.aws/lambda/python:3.13
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV OTOMOTO_URL=https://www.otomoto.pl/osobowe
+
+# Copy requirements first (Docker layer caching)
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY src/ ${LAMBDA_TASK_ROOT}/src/
+COPY pytest.ini ${LAMBDA_TASK_ROOT}/
+
+# Create data directory for output
+RUN mkdir -p ${LAMBDA_TASK_ROOT}/data
+
+# Copy Lambda handler
+COPY lambda_handler.py ${LAMBDA_TASK_ROOT}/
+
+# Lambda handler function
+CMD ["lambda_handler.handler"]

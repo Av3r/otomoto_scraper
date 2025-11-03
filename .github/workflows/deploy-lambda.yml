@@ -1,0 +1,119 @@
+################################################################################
+# GitHub Actions Workflow - Lambda Deployment
+################################################################################
+# Ten workflow:
+# 1. Build Docker image dla AWS Lambda (Dockerfile.lambda)
+# 2. Push image do AWS ECR (Elastic Container Registry)
+# 3. Update Lambda function z nowym image
+#
+# Trigger:
+# - Push do main branch (tylko jeśli zmieniono src/ lub Dockerfile.lambda)
+# - Manual workflow_dispatch
+################################################################################
+
+name: Deploy Lambda
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'Dockerfile.lambda'
+      - 'lambda_handler.py'
+      - 'requirements.txt'
+      - '.github/workflows/deploy-lambda.yml'
+  
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deploy even without code changes'
+        required: false
+        default: 'false'
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: otomoto-scraper
+  LAMBDA_FUNCTION_NAME: otomoto-scraper
+
+jobs:
+  deploy:
+    name: Build and Deploy to Lambda
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build Docker image dla Lambda
+          docker build -f Dockerfile.lambda -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # Push obu tagów
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Update Lambda function
+        run: |
+          aws lambda update-function-code \
+            --function-name $LAMBDA_FUNCTION_NAME \
+            --image-uri ${{ steps.build-image.outputs.image }} \
+            --region $AWS_REGION
+
+      - name: Wait for Lambda update to complete
+        run: |
+          aws lambda wait function-updated \
+            --function-name $LAMBDA_FUNCTION_NAME \
+            --region $AWS_REGION
+
+      - name: Test Lambda invocation (optional)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          aws lambda invoke \
+            --function-name $LAMBDA_FUNCTION_NAME \
+            --region $AWS_REGION \
+            --log-type Tail \
+            --query 'LogResult' \
+            --output text \
+            response.json | base64 --decode
+          
+          echo "Lambda response:"
+          cat response.json
+
+      - name: Upload response artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-response
+          path: response.json
+          if-no-files-found: warn
+
+      - name: Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Lambda Function:** $LAMBDA_FUNCTION_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Image:** ${{ steps.build-image.outputs.image }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Region:** $AWS_REGION" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "- View logs: [CloudWatch Logs](https://$AWS_REGION.console.aws.amazon.com/cloudwatch/home?region=$AWS_REGION#logsV2:log-groups/log-group/\$252Faws\$252Flambda\$252F$LAMBDA_FUNCTION_NAME)" >> $GITHUB_STEP_SUMMARY
+          echo "- Test manually: \`aws lambda invoke --function-name $LAMBDA_FUNCTION_NAME response.json\`" >> $GITHUB_STEP_SUMMARY
