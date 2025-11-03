@@ -9,9 +9,9 @@
 ################################################################################
 
 variable "aws_region" {
-  description = "AWS Region gdzie deploy infrastructure (Frankfurt = eu-central-1)"
+  description = "AWS Region gdzie deploy infrastructure (Stockholm = eu-north-1)"
   type        = string
-  default     = "eu-central-1"
+  default     = "eu-north-1"
 }
 
 variable "environment" {
