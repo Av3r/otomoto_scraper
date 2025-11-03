@@ -37,7 +37,7 @@ def handler(event, context):
             - 500: Error occurred
     """
     print(f"Lambda invoked with event: {json.dumps(event)}")
-    print(f"Request ID: {context.request_id}")
+    print(f"Request ID: {context.aws_request_id}")
     print(f"Function: {context.function_name}")
     print(f"Memory limit: {context.memory_limit_in_mb} MB")
     
@@ -58,7 +58,7 @@ def handler(event, context):
                     'message': 'Scraper completed successfully',
                     'output_file': output_file,
                     'file_size': file_size,
-                    'request_id': context.request_id
+                    'request_id': context.aws_request_id
                 })
             }
         else:
@@ -67,7 +67,7 @@ def handler(event, context):
                 'statusCode': 200,
                 'body': json.dumps({
                     'message': 'Scraper completed but no output file found',
-                    'request_id': context.request_id
+                    'request_id': context.aws_request_id
                 })
             }
     
@@ -81,6 +81,6 @@ def handler(event, context):
             'body': json.dumps({
                 'message': 'Error running scraper',
                 'error': str(e),
-                'request_id': context.request_id
+                'request_id': context.aws_request_id
             })
         }
