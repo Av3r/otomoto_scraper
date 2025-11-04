@@ -1,0 +1,1 @@
+{"statusCode": 200, "body": "{\"message\": \"Scraper completed successfully\", \"output_file\": \"/tmp/data/all_offers.jsonl\", \"file_size\": 44039, \"request_id\": \"7a4435cd-1941-4a53-9e14-95879f0f8597\"}"}
